@@ -1,0 +1,110 @@
+#! /bin/sh
+# Configure	This script is used to configure the Linux kernel.
+#
+# Usage:	Configure [-pro]
+#
+# Version;	@(#)Configure	1.3	04/05/93
+#
+# Author:	Linus Torvalds, <torvalds@helsinki.fi>
+#
+
+  # Set variables to initial state.
+  OPTS=""
+  CONFIG=.config~
+  CONFIG_H=include/linux/autoconf.h
+  next="y"
+  old="y"
+
+  # Check commandline arguments.
+  >config.new
+  while [ $# != 0 ]
+  do
+	case $1 in
+		-pro)	OPTS="UTS_SYSNAME \"LINUX/Pro\""
+			;;
+		*)	echo "Usage: Configure [-pro]"
+			exit 1
+			;;
+	esac
+	shift
+  done
+ 	
+  echo "#" > $CONFIG
+  echo "# Automatically generated make config: don't edit" >> $CONFIG
+  echo "#" >> $CONFIG
+
+  echo "/*" > $CONFIG_H
+  echo " * Automatically generated C config: don't edit" >> $CONFIG_H
+  echo " */" >> $CONFIG_H
+
+  # First of all, emit the "special" features to <linux/autoconf.h>.
+  if [ "${OPTS}" ]
+  then
+	echo "#define ${OPTS}" >> $CONFIG_H
+  fi
+
+  # Read our standard input (which is the CONFIG.IN file).
+  while read i
+  do
+	echo $i >> config.new
+  	echo >> $CONFIG
+  	echo >> $CONFIG_H
+  	echo
+	echo "#" >> $CONFIG
+	echo "/*" >> $CONFIG_H
+	echo "**"
+	while [ "$i" != "." -a "$i" != ":" ]
+	do
+		echo "# "$i >> $CONFIG
+		echo " * "$i >> $CONFIG_H
+		echo "**" $i
+		read i || break
+		echo $i >> config.new
+	done
+	echo "#" >> $CONFIG
+	echo " */" >> $CONFIG_H
+	echo "**"
+	read i || break
+	echo $i >> config.new
+	while [ "$i" != "." -a "$i" != ":" ]
+	do
+		read j ques def || break
+		if [ "$old" = "n" ]
+		then
+			echo No $i
+			ans="n"
+		else
+			echo -n $i '('$ques', default='$def')? '
+			read ans < /dev/tty
+			if [ "$ans" = "" ]
+			then
+				ans=$def
+			fi
+		fi
+		echo $j $ques $ans >> config.new
+		if [ "$ans" = "y" ]
+		then
+			echo $j = $j >> $CONFIG
+			echo "#define" $j 1 >> $CONFIG_H
+			next="y";
+		fi
+		read i || break
+		echo $i >> config.new
+	done
+	old=$next
+	next="y"
+	if [ "$i" = ":" ]
+	then
+		next="n"
+	fi
+  done
+  mv config.new config.in
+
+  echo
+  echo "The linux kernel is now hopefully configured for your setup."
+  echo "Check the top-level Makefile for additional configuration,"
+  echo "and do a 'make dep ; make clean' if you want to be sure all"
+  echo "the files are correctly re-made"
+  echo
+
+  exit 0
