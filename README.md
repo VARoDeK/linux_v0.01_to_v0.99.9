@@ -24,5 +24,10 @@ wget --execute="robots = off" --mirror --convert-links --no-parent https://mirro
 
 Donwload the repository on your system and open `index.html`, in a browser, which is present inside `mirrors.edge.kernel.org/pub/linux/kernel/Historic`.
 
+---
+
+## How to Browse Code?
+
+Checkout different branches.
 
 ---
