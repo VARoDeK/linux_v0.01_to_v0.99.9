@@ -1,0 +1,4 @@
+User-Agent: ia_archiver
+Disallow:
+User-Agent: *
+Disallow: /
