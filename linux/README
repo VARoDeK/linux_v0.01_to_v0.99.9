@@ -1,0 +1,109 @@
+
+		DON'T PANIC
+
+This is the README for the Linux kernel sources.  It tells a few small
+things about kernel configuration and other things that can perhaps be
+useful if you want to compile the kernel from scratch.  It leaves out a
+LOT as well, but it shouldn't really be that hard to compile the kernel. 
+I hope. 
+
+In order to compile this version of the kernel you need GCC 2.4.3 or
+newer (older compiler versions have problems - no guarantees it will
+even compile much less work).  Some makefile targets require special
+commands which may not be available on all machines (see below).  Normal
+utilities like ls etc are not explicitly listed, they are assumed to be
+available on all systems. 
+
+Kernel sources are usually kept in /usr/src/linux.  If you have them
+elsewhere, you will have to change path names in a few places. 
+Generally, if you aren't sure of what you are doing, make your life
+easier by using the standard /usr/src/linux source tree.  Filenames that
+aren't absolute are supposed to be relative to the toplevel kernel
+source directory. 
+
+* Basic configuration
+
+	* SETUP
+
+1.  make sure /usr/include/asm and /usr/include/linux are symlinks to
+the linux source tree include files.  The output of
+
+  # ls -ld /usr/include/asm /usr/include/linux
+
+should look like this:
+
+  lrwxrwxrwx   1 root     root           26 Apr 19 20:03 /usr/include/asm -> /usr/src/linux/include/asm
+  lrwxrwxrwx   1 root     root           28 Apr 19 20:03 /usr/include/linux -> /usr/src/linux/include/linux
+
+If it doesn't, create the appropriate symlinks with
+
+  # cd /usr/include
+  # rm -rf linux asm
+  # ln -s /usr/src/linux/include/linux .
+  # ln -s /usr/src/linux/include/asm .
+
+Also, if you are installing a new version of linux over the sources of
+an old one (or have user kernel patches to get a new version), you
+should probably do a "make mrproper" to remove any traces of old object
+files or incorrect dependency information. 
+
+2.  Edit Makefile: Check the definitions of macros ROOTDEV, RAMDISK and
+SVGA_MODE before you run make.  They are explained in the Makefile. 
+
+3.  Run "make config" in /usr/src/linux, and answer the questions that
+the config script asks you.  It should hopefully set up most of the rest
+of the flags for your system. 
+
+4.  Run "make dep" to set up all the dependencies correctly.  The
+default dependencies may not fit your system due to different compiler
+versions or similar.  Also, you may wish to run "make clean" first to
+make sure you don't have any old object files that mess things up if you
+have changed or patched your kernel. 
+
+* Running make
+
+Unless you know what you're doing, don't ever run the makefiles in
+subdirectories by hand.  There is a bit of interaction between the
+various makefiles, e.g.  in the form of inherited macros and the like. 
+
+The following targets all apply for the makefile at the root of the
+kernel source tree. 
+
+"make" or "make all" compiles the kernel and makes a compressed kernel
+image called "zImage".  It also bumps compilation numbers to help you
+keep track of different kernels. 
+
+"make Image" is like "make all", but it doesn't bump the number in
+.version, which tells how many times this version has been compiled
+(helps you differentiate between different configurations etc). 
+
+"make disk" is like "make Image", but it additionally writes out a copy
+of the boot image to a floppy in your first floppy drive (/dev/fd0;
+change the filename if you want a different floppy).  You need to have a
+formatted, overwritable floppy in that drive when it is time to do the
+copy.  This requires dd. 
+
+"make zdisk" and "make zImage" are the same as their 'z-less'
+counterparts, but create a compressed kernel that autodecompresses on
+bootup.  This is the preferred mode of operation, as it both allows for
+a larger kernel and makes the images smaller. 
+
+"make dep" updates all dependencies.  This requires sed.  It modifies
+the makefiles directly (the end of them, starting at the ###Dependencies
+-line at the end).  "make dep" is required after patching, or the kernel
+may not compile cleanly. 
+
+"make clean" will remove all object files and other files created by the
+compilation.  This requires basename. 
+
+You may wish to redirect compiler error messages to a file so that you
+can review them later and to ease problem fixing.  You can do this with
+Bash with:
+
+	make something 2>&1 | tee make.out
+
+The tee part is so that you can check what is going on while the
+compilation runs.  If you have GNU emacs and use M-x compile you don't
+need this, of course. 
+
+		Lars Wirzenius & Linus Torvalds
